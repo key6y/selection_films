@@ -1,0 +1,16 @@
+FROM python:3.9-slim
+
+# Установка wget для загрузки wait-for-it
+RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
+
+# Загрузка и установка wait-for-it.sh
+RUN wget -O /wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && chmod +x /wait-for-it.sh
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY . .
+
+# Запуск с ожиданием PostgreSQL
+CMD ["/wait-for-it.sh", "-t", "30", "db:5432", "--", "python", "inter.py"]
