@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рекомендации фильмов и сериалов</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f3f4f6;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .result-item {
+            background-color: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center mb-6">🎬 Экспертная система подбора фильмов и сериалов</h1>
+
+        <form id="recommendationForm" class="bg-white p-6 rounded-lg shadow-md">
+            <h2 class="text-xl font-semibold mb-4">Параметры поиска</h2>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Тип контента:</label>
+                <select name="content_type" class="mt-1 block w-full p-2 border rounded-md">
+                    <option value="movie">Фильм</option>
+                    <option value="series">Сериал</option>
+                    <option value="all">Все</option>
+                </select>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Жанр (примеры: Драма, Комедия, Фантастика, Триллер, Боевик):</label>
+                <input type="text" name="genre" class="mt-1 block w-full p-2 border rounded-md" placeholder="Введите жанр">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Минимальный рейтинг (0-10):</label>
+                <input type="number" name="min_rating" min="0" max="10" step="0.1" class="mt-1 block w-full p-2 border rounded-md" placeholder="0">
+            </div>
+
+            <div class="mb-4 flex space-x-4">
+                <div class="w-1/2">
+                    <label class="block text-sm font-medium text-gray-700">Год выпуска от:</label>
+                    <input type="number" name="year_from" class="mt-1 block w-full p-2 border rounded-md" placeholder="1900">
+                </div>
+                <div class="w-1/2">
+                    <label class="block text-sm font-medium text-gray-700">Год выпуска до:</label>
+                    <input type="number" name="year_to" class="mt-1 block w-full p-2 border rounded-md" placeholder="2025">
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Страна:</label>
+                <input type="text" name="country" class="mt-1 block w-full p-2 border rounded-md" placeholder="Введите страну">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Язык:</label>
+                <input type="text" name="language" class="mt-1 block w-full p-2 border rounded-md" placeholder="Введите язык">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Возрастной рейтинг:</label>
+                <input type="text" name="age_rating" class="mt-1 block w-full p-2 border rounded-md" placeholder="Введите возрастной рейтинг">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Режиссёр:</label>
+                <input type="text" name="director" class="mt-1 block w-full p-2 border rounded-md" placeholder="Введите режиссёра">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Актёр:</label>
+                <input type="text" name="actor" class="mt-1 block w-full p-2 border rounded-md" placeholder="Введите актёра">
+            </div>
+
+            <div id="seasonsFields" class="mb-4 hidden">
+                <div class="flex space-x-4">
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700">Минимальное количество сезонов:</label>
+                        <input type="number" name="min_seasons" class="mt-1 block w-full p-2 border rounded-md" placeholder="0">
+                    </div>
+                    <div class="w-1/2">
+                        <label class="block text-sm font-medium text-gray-700">Максимальное количество сезонов:</label>
+                        <input type="number" name="max_seasons" class="mt-1 block w-full p-2 border rounded-md" placeholder="999">
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Количество результатов:</label>
+                <input type="number" name="limit" class="mt-1 block w-full p-2 border rounded-md" placeholder="10" value="10">
+            </div>
+
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">Сортировать по:</label>
+                <select name="sort_by" class="mt-1 block w-full p-2 border rounded-md">
+                    <option value="rating">По рейтингу</option>
+                    <option value="year">По году выпуска</option>
+                    <option value="seasons">По количеству сезонов</option>
+                </select>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600">Получить рекомендации</button>
+        </form>
+
+        <div id="results" class="results"></div>
+
+        <div class="mt-6">
+            <button id="showOptions" class="w-full bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600">Просмотреть доступные варианты</button>
+        </div>
+
+        <div id="options" class="mt-4 hidden bg-white p-4 rounded-lg shadow-md"></div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
