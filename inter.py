@@ -3,19 +3,21 @@ from main import ExpertSystem
 import sys
 import os
 
-# Установка кодировки UTF-8 для корректной работы с русским текстом
+# Установка кодировки UTF-8
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
     sys.stderr.reconfigure(encoding='utf-8')
 
-# Конфигурация подключения к базе данных
+# Динамическая конфигурация подключения к базе данных
+is_docker = os.environ.get('DOCKER_ENV', 'false').lower() == 'true'
+# Принудительно используем "db" внутри контейнера, если запущены через docker exec
 db_config = {
-    "host": "localhost",  # Изменено на localhost для локального запуска
+    "host": "db" if is_docker or 'DOCKER_ENV' in os.environ else "localhost",
     "database": "movie_recommendation_system",
     "user": "postgres",
     "password": "luntik2406",
     "port": "5432",
-    "options": "-c client_encoding=UTF8"  # Принудительная установка кодировки клиента
+    "options": "-c client_encoding=UTF8"
 }
 
 def get_db_connection():
@@ -39,9 +41,11 @@ def main():
                     while content_type not in ["фильм", "сериал", "все"]:
                         content_type = input("Некорректный ввод. Допустимые значения: Фильм, Сериал, Все: ").lower()
 
-                    genre = input("Жанр (оставьте пустым для любого, примеры: Драма, Комедия, Фантастика, Триллер, Боевик): ")
-                    while genre and genre not in ["драма", "комедия", "фантастика", "триллер", "боевик"]:
-                        genre = input("Некорректный ввод. Допустимые значения: Драма, Комедия, Фантастика, Триллер, Боевик: ").lower()
+                    genre = input("Жанр (оставьте пустым для любого, примеры: Драма, Комедия, Фантастика, Триллер, Боевик): ").lower()
+                    valid_genres = ["драма", "комедия", "фантастика", "триллер", "боевик"]
+                    while genre and genre not in valid_genres:
+                        print(f"Некорректный жанр '{genre}'. Допустимые значения: {', '.join(valid_genres)}")
+                        genre = input("Введите жанр заново: ").lower()
 
                     min_rating = float(input("Минимальный рейтинг (0-10): ") or 0)
                     while min_rating < 0 or min_rating > 10:
@@ -54,11 +58,11 @@ def main():
                         year_from = int(input("Год выпуска от: ") or 1900)
                         year_to = int(input("Год выпуска до: ") or 2025)
 
-                    country = input("Страна (оставьте пустым для любой): ")
-                    language = input("Язык (оставьте пустым для любого): ")
-                    age_rating = input("Возрастной рейтинг (оставьте пустым для любого): ")
-                    director = input("Режиссер (оставьте пустым для любого): ")
-                    actor = input("Актёр (оставьте пустым для любого): ")
+                    country = input("Страна (оставьте пустым для любой): ").lower() or None
+                    language = input("Язык (оставьте пустым для любого): ").lower() or None
+                    age_rating = input("Возрастной рейтинг (оставьте пустым для любого): ") or None
+                    director = input("Режиссер (оставьте пустым для любого): ") or None
+                    actor = input("Актёр (оставьте пустым для любого): ") or None
 
                     min_seasons = None
                     max_seasons = None

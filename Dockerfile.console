@@ -7,10 +7,12 @@ RUN apt-get update && apt-get install -y wget && rm -rf /var/lib/apt/lists/*
 RUN wget -O /wait-for-it.sh https://raw.githubusercontent.com/vishnubob/wait-for-it/master/wait-for-it.sh && chmod +x /wait-for-it.sh
 
 WORKDIR /app
+
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
+COPY inter.py .
+COPY main.py .
 
-# Запуск с ожиданием PostgreSQL
-CMD ["/wait-for-it.sh", "-t", "30", "db:5432", "--", "python", "inter.py"]
+# Держим контейнер активным, ожидая команды
+CMD ["/wait-for-it.sh", "-t", "30", "db:5432", "--", "tail", "-f", "/dev/null"]

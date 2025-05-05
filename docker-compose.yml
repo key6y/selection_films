@@ -1,44 +1,41 @@
-name: movie-recommendation
+name: movie-recommendation-system
 
 services:
-  app:
-    build:
-      context: D:\курсач бд
-      dockerfile: Dockerfile
-    depends_on:
-      db:
-        condition: service_started
-        required: true
-    environment:
-      - DB_HOST=db
-      - DB_NAME=movie_recommendation_system
-      - DB_USER=postgres
-      - DB_PASSWORD=luntik2406
-      - DB_PORT=5432
-    volumes:
-      - type: bind
-        source: D:\курсач бд
-        target: /app
-        bind:
-          create_host_path: true
-    stdin_open: true
-    tty: true
-
   db:
     image: postgres:13
     environment:
-      - POSTGRES_DB=movie_recommendation_system
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=luntik2406
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: luntik2406
+      POSTGRES_DB: movie_recommendation_system
     volumes:
-      - type: volume
-        source: pgdata
-        target: /var/lib/postgresql/data
-      - type: bind
-        source: D:\курсач бд\init.sql
-        target: /docker-entrypoint-initdb.d/init.sql
-        bind:
-          create_host_path: true
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  console:
+    build:
+      context: .
+      dockerfile: Dockerfile.console
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  pgdata:
+  db_data:

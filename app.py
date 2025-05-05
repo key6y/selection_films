@@ -9,9 +9,9 @@ if sys.stdout.encoding != 'utf-8':
 
 app = Flask(__name__)
 
-# Конфигурация подключения к базе данных
+# Конфигурация подключения к базе данных (для Docker)
 db_config = {
-    "host": "localhost",
+    "host": "db",
     "database": "movie_recommendation_system",
     "user": "postgres",
     "password": "luntik2406",
