@@ -14,5 +14,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY inter.py .
 COPY main.py .
 
-# Держим контейнер активным, ожидая команды
-CMD ["/wait-for-it.sh", "-t", "30", "db:5432", "--", "tail", "-f", "/dev/null"]
+CMD ["/wait-for-it.sh", "-t", "30", "db:5432", "--", "python", "inter.py"]

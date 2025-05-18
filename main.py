@@ -10,66 +10,82 @@ class ExpertSystem:
         params = []
         if content_type in ["series", "all"]:
             query += "SELECT s.title, s.release_year, s.rating, s.seasons, NULL as duration FROM series s "
+            joins = []
+            where_clauses = ["1=1"]
             if genre:
-                query += "JOIN series_genres sg ON s.id = sg.series_id JOIN genres g ON sg.genre_id = g.id WHERE LOWER(g.name) = %s "
+                joins.append("JOIN series_genres sg ON s.id = sg.series_id JOIN genres g ON sg.genre_id = g.id")
+                where_clauses.append("LOWER(g.name) = %s")
                 params.append(genre)
-            else:
-                query += "WHERE 1=1 "
             if min_rating:
-                query += f"AND s.rating >= {min_rating} "
+                where_clauses.append("s.rating >= %s")
+                params.append(min_rating)
             if year_from:
-                query += f"AND s.release_year >= {year_from} "
+                where_clauses.append("s.release_year >= %s")
+                params.append(year_from)
             if year_to:
-                query += f"AND s.release_year <= {year_to} "
+                where_clauses.append("s.release_year <= %s")
+                params.append(year_to)
             if country:
-                query += f"AND LOWER(s.country) = %s "
+                where_clauses.append("LOWER(s.country) = %s")
                 params.append(country)
             if language:
-                query += f"AND LOWER(s.language) = %s "
+                where_clauses.append("LOWER(s.language) = %s")
                 params.append(language)
             if age_rating:
-                query += f"AND s.age_rating = %s "
+                where_clauses.append("s.age_rating = %s")
                 params.append(age_rating)
             if director:
-                query += f"JOIN directors d ON s.director_id = d.id WHERE LOWER(d.name) = %s "
+                joins.append("JOIN directors d ON s.director_id = d.id")
+                where_clauses.append("LOWER(d.name) = %s")
                 params.append(director)
             if actor:
-                query += f"JOIN series_actors sa ON s.id = sa.series_id JOIN actors a ON sa.actor_id = a.id WHERE LOWER(a.name) = %s "
-                params.append(actor)
+                joins.append("JOIN series_actors sa ON s.id = sa.series_id JOIN actors a ON sa.actor_id = a.id")
+                where_clauses.append("LOWER(a.name) = %s")
+                params.append(actor.lower())
             if min_seasons is not None:
-                query += f"AND s.seasons >= {min_seasons} "
+                where_clauses.append("s.seasons >= %s")
+                params.append(min_seasons)
             if max_seasons is not None:
-                query += f"AND s.seasons <= {max_seasons} "
+                where_clauses.append("s.seasons <= %s")
+                params.append(max_seasons)
+            query += " ".join(joins) + " WHERE " + " AND ".join(where_clauses) if joins or where_clauses[1:] else ""
         if content_type == "all":
             query += " UNION "
         if content_type in ["movie", "all"]:
             query += "SELECT m.title, m.release_year, m.rating, NULL as seasons, m.duration FROM movies m "
+            joins = []
+            where_clauses = ["1=1"]
             if genre:
-                query += "JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id WHERE LOWER(g.name) = %s "
+                joins.append("JOIN movie_genres mg ON m.id = mg.movie_id JOIN genres g ON mg.genre_id = g.id")
+                where_clauses.append("LOWER(g.name) = %s")
                 params.append(genre)
-            else:
-                query += "WHERE 1=1 "
             if min_rating:
-                query += f"AND m.rating >= {min_rating} "
+                where_clauses.append("m.rating >= %s")
+                params.append(min_rating)
             if year_from:
-                query += f"AND m.release_year >= {year_from} "
+                where_clauses.append("m.release_year >= %s")
+                params.append(year_from)
             if year_to:
-                query += f"AND m.release_year <= {year_to} "
+                where_clauses.append("m.release_year <= %s")
+                params.append(year_to)
             if country:
-                query += f"AND LOWER(m.country) = %s "
+                where_clauses.append("LOWER(s.country) = %s")
                 params.append(country)
             if language:
-                query += f"AND LOWER(m.language) = %s "
+                where_clauses.append("LOWER(s.language) = %s")
                 params.append(language)
             if age_rating:
-                query += f"AND m.age_rating = %s "
+                where_clauses.append("m.age_rating = %s")
                 params.append(age_rating)
             if director:
-                query += f"JOIN directors d ON m.director_id = d.id WHERE LOWER(d.name) = %s "
+                joins.append("JOIN directors d ON m.director_id = d.id")
+                where_clauses.append("LOWER(d.name) = %s")
                 params.append(director)
             if actor:
-                query += f"JOIN movie_actors ma ON m.id = ma.movie_id JOIN actors a ON ma.actor_id = a.id WHERE LOWER(a.name) = %s "
-                params.append(actor)
+                joins.append("JOIN movie_actors ma ON m.id = ma.movie_id JOIN actors a ON ma.actor_id = a.id")
+                where_clauses.append("LOWER(a.name) = %s")
+                params.append(actor.lower())
+            query += " ".join(joins) + " WHERE " + " AND ".join(where_clauses) if joins or where_clauses[1:] else ""
         query += ") AS results "
         if sort_by == "rating":
             query += "ORDER BY rating DESC "
@@ -102,6 +118,18 @@ class ExpertSystem:
         """, (title,))
         result = self.cursor.fetchone()
         return result[0] if result else None
+
+    def get_actors(self, title, is_movie):
+        table = "movies" if is_movie else "series"
+        join_table = "movie_actors" if is_movie else "series_actors"
+        self.cursor.execute(f"""
+            SELECT DISTINCT a.name
+            FROM {table} t
+            JOIN {join_table} ta ON t.id = ta.{'movie' if is_movie else 'series'}_id
+            JOIN actors a ON ta.actor_id = a.id
+            WHERE t.title = %s
+        """, (title,))
+        return [row[0] for row in self.cursor.fetchall()][:3]  # Ограничиваем до 3 актёров
 
     def get_country(self, title, is_movie):
         table = "movies" if is_movie else "series"

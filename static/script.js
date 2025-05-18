@@ -43,7 +43,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <p>Продолжительность: ${item.duration}</p>
                         <p>Жанры: ${item.genres.join(', ')}</p>
                         <p>Режиссёр: ${item.director || 'Не указан'}</p>
-                        <p>Страна: ${item.country}, Язык: ${item.language}, Возраст: ${item.age_rating}</p>
+                        <p>Актёры: ${item.actors ? item.actors.join(', ') : 'Не указано'}</p>
+                        <p>Страна: ${item.country || 'Не указано'}, Язык: ${item.language || 'Не указано'}, Возраст: ${item.age_rating || 'Не указано'}</p>
                     </div>
                 `;
             });

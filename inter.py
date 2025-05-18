@@ -7,10 +7,11 @@ import os
 if sys.stdout.encoding != 'utf-8':
     sys.stdout.reconfigure(encoding='utf-8')
     sys.stderr.reconfigure(encoding='utf-8')
+if sys.stdin.encoding != 'utf-8':
+    sys.stdin.reconfigure(encoding='utf-8')
 
 # Динамическая конфигурация подключения к базе данных
 is_docker = os.environ.get('DOCKER_ENV', 'false').lower() == 'true'
-# Принудительно используем "db" внутри контейнера, если запущены через docker exec
 db_config = {
     "host": "db" if is_docker or 'DOCKER_ENV' in os.environ else "localhost",
     "database": "movie_recommendation_system",
@@ -104,14 +105,20 @@ def main():
                         print("=== Результаты поиска ===")
                         for i, (title, year, rating, seasons, duration) in enumerate(recommendations, 1):
                             content_type_display = "Фильм" if duration else "Сериал"
-                            print(f"{i}. {title} ({year}), Рейтинг: {rating}, {duration or f'{seasons} сезонов'}")
+                            duration_or_seasons = f"{duration} мин" if duration else f"{seasons} сезона(ов)"
+                            print(f"{i}. {title} ({year}) | {content_type_display}")
+                            print(f"   Рейтинг: {rating} | Длительность: {duration_or_seasons}")
                             genres = expert_system.get_genres(title, duration is not None)
                             if genres:
                                 print(f"   Жанры: {', '.join(genres)}")
                             director = expert_system.get_director(title, duration is not None)
                             if director:
                                 print(f"   Режиссер: {director}")
-                            print(f"   Страна: {expert_system.get_country(title, duration is not None)}, Язык: {expert_system.get_language(title, duration is not None)}, Возраст: {expert_system.get_age_rating(title, duration is not None)}")
+                            actors = expert_system.get_actors(title, duration is not None)
+                            if actors:
+                                print(f"   Актёры: {', '.join(actors)}")
+                            print(f"   Страна: {expert_system.get_country(title, duration is not None) or 'Не указано'} | Язык: {expert_system.get_language(title, duration is not None) or 'Не указано'} | Возраст: {expert_system.get_age_rating(title, duration is not None) or 'Не указано'}")
+                            print("-" * 50)
                     else:
                         print("По вашему запросу ничего не найдено. 😞")
                 elif choice == "2":
